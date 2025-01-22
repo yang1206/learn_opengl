@@ -40,7 +40,11 @@ add_subdirectory(wrapper)
 add_subdirectory(application)
 
 # 添加子目录
+add_subdirectory(src/chapter0)
 add_subdirectory(src/chapter1)
 add_subdirectory(src/chapter2)
 add_subdirectory(src/chapter3)
 add_subdirectory(src/chapter4)
+add_subdirectory(src/chapter5)
+add_subdirectory(src/chapter6)
+add_subdirectory(src/chapter7)

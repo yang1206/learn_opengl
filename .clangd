@@ -1,0 +1,9 @@
+If:
+  # 匹配特定头文件
+  PathMatch: .*OpenGL/OpenGL\.h
+Index:
+  # 禁止索引该头文件
+  Background: Skip
+CompileFlags:
+  # 禁止自动插入该头文件
+  HeaderInsertion: Never

@@ -26,9 +26,13 @@ bool Application::init(const int width, const int height) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         return false;
     }
+
     // 设置窗口属性, macos最高支持OpenGL 4.1
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
     // 设置核心渲染模式
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -42,8 +46,6 @@ bool Application::init(const int width, const int height) {
 
     // 设置当前上下文 设置当前窗口为 opengl 的绘制舞台
     glfwMakeContextCurrent(mWindow);
-
-
     // 初始化 glad
     if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
         std::cerr << "Failed to initialize glad" << std::endl;
@@ -69,18 +71,12 @@ bool Application::update() {
 
     // 检查消息队列是否有消息需要处理
     glfwPollEvents();
-
     // 切换双缓冲区
     glfwSwapBuffers(mWindow);
-
-    glfwSetWindowUserPointer(mWindow, this);
     return true;
 }
 
-void Application::destroy() {
-    glfwDestroyWindow(mWindow);
-    glfwTerminate();
-}
+void Application::destroy() { glfwTerminate(); }
 
 void Application::setResizeCallback(ResizeCallback callback) { mResizeCallback = callback; }
 

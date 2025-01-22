@@ -23,11 +23,13 @@ public:
     uint32_t getWidth() const { return mWidth; }
     uint32_t getHeight() const { return mHeight; }
 
-    bool init(const int width = 800, const int height = 400);
+    bool init(const int width = 800, const int height = 600);
     bool update();
     void destroy();
     void setResizeCallback(ResizeCallback callback);
     void setKeyCallback(KeyCallback callback);
+
+    GLFWwindow *getWindow() const { return mWindow; }
 
 private:
     static Application *instance;
