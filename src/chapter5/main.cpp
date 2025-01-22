@@ -152,9 +152,6 @@ int main() {
     }
     app.setKeyCallback(onKeyBoard);
     app.setResizeCallback(onResize);
-
-
-    GL_CALL(glViewport(0, 0, 800, 600));
     GL_CALL(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
     prepareShader();
     prepareSingleBuffer();
