@@ -1,4 +1,3 @@
-#include <OpenGL/OpenGL.h>
 #define GL_SILENCE_DEPRECATION
 // glad引入要在 glfw 前面
 #include <glad/glad.h>

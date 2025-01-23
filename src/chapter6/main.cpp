@@ -1,4 +1,3 @@
-#include <OpenGL/OpenGL.h>
 #define GL_SILENCE_DEPRECATION
 #include <glad/glad.h>
 

@@ -7,7 +7,9 @@
 #include "checkError.h"
 
 
-void onResize(int width, int height) { std::cout << "onResize: " << width << " " << height << std::endl; }
+void onResize(int width, int height) { 
+    glViewport(0, 0, width, height);
+ }
 
 
 void onKeyBoard(int key, int action, int mods) {
