@@ -18,10 +18,14 @@ const char *vertexShaderSource = "#version 330 core\n"
                                  "layout (location = 0) in vec3 aPos;\n"
                                  "layout (location = 1) in vec3 aColor;\n"
                                  "out vec3 ourColor;\n"
+                                 "uniform float xOffset;\n"
+                                 "uniform float yOffset;\n"
+                                 "uniform float colorMix;\n"
                                  "void main()\n"
                                  "{\n"
-                                 "   gl_Position = vec4(aPos, 1.0);\n"
-                                 "   ourColor = aColor;\n"
+                                 "   gl_Position = vec4(aPos.x + xOffset, aPos.y + yOffset, aPos.z, 1.0);\n"
+                                 "   vec3 nextColor = vec3(aColor.b, aColor.r, aColor.g);\n"
+                                 "   ourColor = mix(aColor, nextColor, colorMix);\n"
                                  "}\0";
 
 const char *fragmentShaderSource = "#version 330 core\n"
@@ -130,7 +134,6 @@ int main() {
     glEnableVertexAttribArray(1);
 
 
-
     // glBindBuffer(GL_ARRAY_BUFFER, 0);
     // glBindVertexArray(0);
 
@@ -139,6 +142,22 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(shaderProgram);
+
+        float timeValue = glfwGetTime();
+
+        // x方向使用余弦，y方向使用正弦，这样可以创建圆形运动
+        float xOffset = cos(timeValue) * 0.5f;
+        float yOffset = sin(timeValue) * 0.5f;
+
+        float colorMix = (sin(timeValue) + 1.0f) * 0.5f;
+
+        int xOffsetLocation = glGetUniformLocation(shaderProgram, "xOffset");
+        int yOffsetLocation = glGetUniformLocation(shaderProgram, "yOffset");
+        int colorMixLocation = glGetUniformLocation(shaderProgram, "colorMix");
+        glUniform1f(xOffsetLocation, xOffset);
+        glUniform1f(yOffsetLocation, yOffset);
+        glUniform1f(colorMixLocation, colorMix);
+
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window);
