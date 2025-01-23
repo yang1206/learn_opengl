@@ -1,4 +1,4 @@
-file(GLOB_RECURSE APP ./ *.cpp)
+file(GLOB_RECURSE APP ./ *.cpp *.h)
 
 add_library(app STATIC ${APP})
 

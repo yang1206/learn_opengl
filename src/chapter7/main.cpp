@@ -22,12 +22,18 @@ GLuint shaderProgram = 0;
 
 
 void prepareVAO() {
-    float positions[] = {-0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.5f, 0.0f};
-
-    // 索引数据
-    unsigned int indices[] = {
-            0, 1, 3, 2, 1, 3,
+    float positions[] = {
+            // first triangle
+            -0.9f, -0.5f, 0.0f, // left
+            -0.0f, -0.5f, 0.0f, // right
+            -0.45f, 0.5f, 0.0f, // top
+            // second triangle
+            0.0f, -0.5f, 0.0f, // left
+            0.9f, -0.5f, 0.0f, // right
+            0.45f, 0.5f, 0.0f // top
     };
+
+
 
     // VBO创建
     GLuint vbo;
@@ -37,27 +43,22 @@ void prepareVAO() {
     glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW);
 
 
-    // EBO创建
-    GLuint ebo;
-    glGenBuffers(1, &ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
     // VAO创建
 
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    // 绑定VBO 和 EBO 加入属性描述信息
+    // 绑定VBO 加入属性描述信息
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
 
-    // 绑定EBO ，
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 
+
+//解除绑定vao
     glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 void prepareShader() {
@@ -133,7 +134,7 @@ void render() {
     GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
     GL_CALL(glUseProgram(shaderProgram));
     GL_CALL(glBindVertexArray(vao));
-    GL_CALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void *) (sizeof(int) * 3)));
+    GL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6););
 }
 
 

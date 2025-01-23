@@ -17,7 +17,6 @@ void onKeyBoard(int key, int action, int mods) {
 }
 
 GLuint positionVbo = 0;
-GLuint colorVbo = 0;
 GLuint shaderProgram;
 void prepareSingleBuffer() {
     // 1. 准备顶点位置数据和颜色数据
@@ -28,41 +27,22 @@ void prepareSingleBuffer() {
     };
 
 
-    float colors[] = {
-            1.0f, 0.0f, 0.0f, 1.0f, // 红色
-            0.0f, 1.0f, 0.0f, 1.0f, // 绿色
-            0.0f, 0.0f, 1.0f, 1.0f, // 蓝色
-    };
-
-
     GL_CALL(glGenBuffers(1, &positionVbo));
-    GL_CALL(glGenBuffers(1, &colorVbo));
 
     // position填充数据
     GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, positionVbo));
     GL_CALL(glBufferData(GL_ARRAY_BUFFER, sizeof(positions), positions, GL_STATIC_DRAW));
 
-    // color填充数据
-    GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, colorVbo));
-    GL_CALL(glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW));
 
     // 3. 生成 vao并且绑定
     GLuint vao = 0;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-
-    // 4. 分别将位置/颜色信息的描述信息加入到 vao 中
-
     // 4.1 将位置信息加入到 vao 中
     glBindBuffer(GL_ARRAY_BUFFER, positionVbo);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
-
-    // 4.2 将颜色信息加入到 vao 中
-    glBindBuffer(GL_ARRAY_BUFFER, colorVbo);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
 
 
     // 5. 解绑 VBO 和 VAO
@@ -72,7 +52,7 @@ void prepareSingleBuffer() {
 void prepareShader() {
 
     const char *vertexShaderSource = R"(
-#version 330 core
+#version 420 core
 layout (location = 0) in vec3 aPos;
 void main()
 {
@@ -81,7 +61,7 @@ void main()
 )";
 
     const char *fragmentShaderSource = R"(
-#version 330 core
+#version 420 core
 out vec4 FragColor;
 void main()
 {
