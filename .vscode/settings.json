@@ -2,7 +2,12 @@
   "cSpell.words": [
     "glfw",
     "OPENGL",
+    "Parameteri",
     "Programiv",
-    "Shaderiv"
-  ]
+    "Shaderiv",
+    "stbi",
+    "yscale"
+  ],
+  //保存时自动格式化
+  "editor.formatOnSave": true,
 }

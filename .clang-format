@@ -55,4 +55,30 @@ SpacesInConditionalStatement: false
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 TabWidth: 4
+# 允许数组在多行中对齐
+AlignArrayOfStructures: Right
+
+# 控制数组初始化的格式
+BinPackArguments: false
+AllowAllArgumentsOnNextLine: false
+# 控制数组换行
+ColumnLimit: 120  # 设置一个合理的列宽限制
+AlignAfterOpenBracket: Align
+AllowAllParametersOfDeclarationOnNextLine: false
+
+# 控制数组初始化的缩进
+Cpp11BracedListStyle: true
+IndentWidth: 4
+ContinuationIndentWidth: 8
+
+# 保持已有的换行
+PenaltyBreakAssignment: 100
+PenaltyBreakComment: 100
+PenaltyBreakFirstLessLess: 100
+PenaltyBreakString: 100
+PenaltyExcessCharacter: 100
+PenaltyReturnTypeOnItsOwnLine: 100
+
+# 保持数组初始化的格式
+InsertTrailingCommas: None
 ...
