@@ -24,6 +24,36 @@ add_executable(Learn_OpenGL
         src/glad.c
 )
 
+
+# 在根目录的 CMakeLists.txt 中添加
+set(FONTS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets/fonts")
+set(FONTS_BINARY_DIR "${CMAKE_BINARY_DIR}/assets/fonts")
+
+# 创建目标目录
+file(MAKE_DIRECTORY ${FONTS_BINARY_DIR})
+
+# 复制字体文件
+file(COPY ${FONTS_SOURCE_DIR}/ DESTINATION ${FONTS_BINARY_DIR})
+
+
+set(ASSETS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
+set(ASSETS_BINARY_DIR "${CMAKE_BINARY_DIR}/assets")
+set(SHADERS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shaders")
+set(SHADERS_BINARY_DIR "${CMAKE_BINARY_DIR}/shaders")
+
+add_custom_target(copy_resources ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${ASSETS_SOURCE_DIR}
+        ${ASSETS_BINARY_DIR}
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${SHADERS_SOURCE_DIR}
+        ${SHADERS_BINARY_DIR}
+    COMMENT "Copying resources to binary directory"
+)
+
+add_dependencies(Learn_OpenGL copy_resources)
+
+
 # 查找 OpenGL
 find_package(OpenGL REQUIRED)
 
@@ -64,3 +94,4 @@ add_subdirectory(src/chapter5)
 add_subdirectory(src/chapter6)
 add_subdirectory(src/chapter7)
 add_subdirectory(src/chapter8)
+add_subdirectory(src/chapter9)

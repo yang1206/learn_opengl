@@ -71,7 +71,7 @@ int main() {
     GL_CALL(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
 
 
-    Shader ourShader("../../shaders/vertex.glsl", "../../shaders/fragment.glsl");
+    Shader ourShader("../../shaders/chapter8/vertex.glsl", "../../shaders/chapter8/fragment.glsl");
 
 
     prepareVAO();

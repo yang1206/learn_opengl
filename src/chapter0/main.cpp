@@ -1,11 +1,13 @@
-#include <cmath>
+#include "imgui.h"
 #define GL_SILENCE_DEPRECATION
 // glad引入要在 glfw 前面
 #include <glad/glad.h>
 
 
 #include <GLFW/glfw3.h>
+#include <cmath>
 #include <iostream>
+#include "ImGuiLayer.h"
 
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
@@ -68,6 +70,8 @@ int main() {
         glfwTerminate();
         return -1;
     }
+
+    ImGuiLayer::init(window);
 
     // build and compile our shader program
     // ------------------------------------
@@ -137,28 +141,57 @@ int main() {
     // glBindBuffer(GL_ARRAY_BUFFER, 0);
     // glBindVertexArray(0);
 
+    // 添加控制变量
+    float xOffset = 0.0f;
+    float yOffset = 0.0f;
+    float colorMix = 0.0f;
+    bool autoRotate = true; // 控制是否自动旋转
+    float rotateSpeed = 1.0f; // 控制旋转速度
+    float color[3] = {1.0f, 1.0f, 1.0f}; // 额外添加的颜色控制
+
 
     // 主循环
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT);
+
+        // ImGui新帧
+        ImGuiLayer::begin();
+
+        // ImGui控制面板
+        ImGui::Begin("控制面板");
+
+        ImGui::Checkbox("自动旋转", &autoRotate);
+        ImGui::SliderFloat("旋转速度", &rotateSpeed, 0.1f, 5.0f);
+
+        if (autoRotate) {
+            float timeValue = glfwGetTime() * rotateSpeed;
+            xOffset = cos(timeValue) * 0.5f;
+            yOffset = sin(timeValue) * 0.5f;
+            colorMix = (sin(timeValue) + 1.0f) * 0.5f;
+        } else {
+            ImGui::SliderFloat("X偏移", &xOffset, -0.5f, 0.5f);
+            ImGui::SliderFloat("Y偏移", &yOffset, -0.5f, 0.5f);
+            ImGui::SliderFloat("颜色混合", &colorMix, 0.0f, 1.0f);
+        }
+
+        ImGui::ColorEdit3("三角形颜色", color);
+        ImGui::Text("应用平均 %.3f ms/帧 (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+        ImGui::End();
+
         glUseProgram(shaderProgram);
-
-        float timeValue = glfwGetTime();
-
-        // x方向使用余弦，y方向使用正弦，这样可以创建圆形运动
-        float xOffset = cos(timeValue) * 0.5f;
-        float yOffset = sin(timeValue) * 0.5f;
-
-        float colorMix = (sin(timeValue) + 1.0f) * 0.5f;
 
         int xOffsetLocation = glGetUniformLocation(shaderProgram, "xOffset");
         int yOffsetLocation = glGetUniformLocation(shaderProgram, "yOffset");
         int colorMixLocation = glGetUniformLocation(shaderProgram, "colorMix");
+
         glUniform1f(xOffsetLocation, xOffset);
         glUniform1f(yOffsetLocation, yOffset);
         glUniform1f(colorMixLocation, colorMix);
 
         glDrawArrays(GL_TRIANGLES, 0, 3);
+        // 渲染ImGui
+        ImGuiLayer::end();
 
         glfwSwapBuffers(window);
         // 检查消息队列是否有消息需要处理
@@ -167,7 +200,9 @@ int main() {
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
     glDeleteProgram(shaderProgram);
-
+    // 清理ImGui
+    ImGuiLayer::destroy();
+    ImGui::DestroyContext();
     // 清理
     glfwDestroyWindow(window);
     glfwTerminate();
