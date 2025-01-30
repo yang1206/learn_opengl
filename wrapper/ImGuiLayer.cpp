@@ -38,7 +38,7 @@ void ImGuiLayer::init(GLFWwindow *window) {
 
   // 初始化平台/渲染器绑定
   ImGui_ImplGlfw_InitForOpenGL(window, true);
-  ImGui_ImplOpenGL3_Init("#version 420");
+  ImGui_ImplOpenGL3_Init("#version 410");
 }
 
 void ImGuiLayer::begin() {

@@ -113,6 +113,12 @@ int main() {
     std::cerr << "Failed to initialize application" << std::endl;
     return -1;
   }
+  const GLubyte *version = glGetString(GL_VERSION);
+  const GLubyte *vendor = glGetString(GL_VENDOR);
+  const GLubyte *renderer = glGetString(GL_RENDERER);
+  std::cout << "OpenGL Version: " << version << std::endl;
+  std::cout << "Vendor: " << vendor << std::endl;
+  std::cout << "Renderer: " << renderer << std::endl;
   ImGuiLayer::init(app.getWindow());
 
   app.setKeyCallback(onKeyBoard);
