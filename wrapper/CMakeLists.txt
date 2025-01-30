@@ -9,11 +9,10 @@ set(IMGUI_SOURCES
     ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
-
 file(GLOB_RECURSE WRAPPER ./*.cpp ./*.h)
 
-add_library(wrapper STATIC ${WRAPPER}  ${IMGUI_SOURCES})
-target_include_directories(wrapper PUBLIC 
+add_library(wrapper STATIC ${WRAPPER} ${IMGUI_SOURCES})
+target_include_directories(wrapper PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${IMGUI_DIR}
     ${IMGUI_DIR}/backends

@@ -9,6 +9,11 @@ set(GLFW_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rd/include)
 # 包含头文件路径
 include_directories(${GLFW_INCLUDE_DIR})
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rd)
+
+# 添加gl头文件路径
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/glFramework)
+
 # 添加wrapper头文件路径
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/wrapper)
 
@@ -24,7 +29,6 @@ add_executable(Learn_OpenGL
         src/glad.c
 )
 
-
 # 在根目录的 CMakeLists.txt 中添加
 set(FONTS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets/fonts")
 set(FONTS_BINARY_DIR "${CMAKE_BINARY_DIR}/assets/fonts")
@@ -35,24 +39,22 @@ file(MAKE_DIRECTORY ${FONTS_BINARY_DIR})
 # 复制字体文件
 file(COPY ${FONTS_SOURCE_DIR}/ DESTINATION ${FONTS_BINARY_DIR})
 
-
 set(ASSETS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
 set(ASSETS_BINARY_DIR "${CMAKE_BINARY_DIR}/assets")
 set(SHADERS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/shaders")
 set(SHADERS_BINARY_DIR "${CMAKE_BINARY_DIR}/shaders")
 
 add_custom_target(copy_resources ALL
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${ASSETS_SOURCE_DIR}
         ${ASSETS_BINARY_DIR}
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${SHADERS_SOURCE_DIR}
         ${SHADERS_BINARY_DIR}
-    COMMENT "Copying resources to binary directory"
+        COMMENT "Copying resources to binary directory"
 )
 
 add_dependencies(Learn_OpenGL copy_resources)
-
 
 # 查找 OpenGL
 find_package(OpenGL REQUIRED)
@@ -78,9 +80,13 @@ endif()
 # 链接 GLFW 和 OpenGL 框架
 target_link_libraries(Learn_OpenGL
         ${SHARED_LIBS}
+
+        gl_Framework
         wrapper
         app
 )
+
+add_subdirectory(glFramework)
 add_subdirectory(wrapper)
 add_subdirectory(application)
 
@@ -96,3 +102,4 @@ add_subdirectory(src/chapter7)
 add_subdirectory(src/chapter8)
 add_subdirectory(src/chapter9)
 add_subdirectory(src/chapter10)
+add_subdirectory(src/chapter11)
