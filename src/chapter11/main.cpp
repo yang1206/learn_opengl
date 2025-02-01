@@ -115,7 +115,7 @@ float translateY = -0.1f;
 float rotateAngle = 0.0f;
 float scaleX = 1.0f;
 float scaleY = 1.0f;
-bool autoRotate = false;
+bool autoRotate = true;
 
 int main() {
   Application &app = Application::getInstance();
