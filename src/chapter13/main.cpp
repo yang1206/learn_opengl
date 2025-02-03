@@ -136,7 +136,7 @@ glm::vec3 cubePositions[] = {
 
 int main() {
   Application &app = Application::getInstance();
-  if (!app.init(SCR_WIDTH, SCR_HEIGHT, "Chapter12坐标系统")) {
+  if (!app.init(SCR_WIDTH, SCR_HEIGHT, "Chapter13相机")) {
     std::cerr << "Failed to initialize application" << std::endl;
     return -1;
   }
@@ -184,10 +184,15 @@ int main() {
     projection = glm::perspective(glm::radians(fov),
                                   (float)SCR_WIDTH / (float)SCR_HEIGHT,
                                   nearPlane, farPlane);
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
     // 5. 使用Shader类的方法设置矩阵
-    ourShader.setMat4("view", view);
     ourShader.setMat4("projection", projection);
+
+    float radius = 10.0f;
+    float camX = static_cast<float>(sin(glfwGetTime()) * radius);
+    float camZ = static_cast<float>(cos(glfwGetTime()) * radius);
+    view = glm::lookAt(glm::vec3(camX, 0.0f, camZ), glm::vec3(0.0f, 0.0f, 0.0f),
+                       glm::vec3(0.0f, 1.0f, 0.0f));
+    ourShader.setMat4("view", view);
 
     // 6. 绘制
     glBindVertexArray(VAO);
@@ -196,9 +201,6 @@ int main() {
       glm::mat4 model;
       model = glm::translate(model, cubePositions[i] + translateVec);
       float angle = 20.0f * i;
-      if (i % 3 == 0) // every 3rd iteration (including the first) we set the
-                      // angle using GLFW's time function.
-        angle = glfwGetTime() * 25.0f;
       model =
           glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 

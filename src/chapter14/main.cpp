@@ -1,3 +1,4 @@
+#include "imgui_impl_glfw.h"
 #define GL_SILENCE_DEPRECATION
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -14,12 +15,122 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
+float mixValue = 0.2f;
+float fov = 45.0f;
+float nearPlane = 0.1f;
+float farPlane = 100.0f;
+bool wireframeMode = false;
+glm::vec4 tintColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+glm::vec4 bgColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+glm::vec3 translateVec = glm::vec3(0.0f);
+
+// settings
+const unsigned int SCR_WIDTH = 800;
+const unsigned int SCR_HEIGHT = 600;
+
+// camera
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+// timing
+float deltaTime = 0.0f; // time between current frame and last frame
+float lastFrame = 0.0f;
+
+bool firstMouse = true;
+bool mouseEnabled = false;
+bool imguiWantCaptureMouse = false;
+
+float yaw = -90.0f; // yaw is initialized to -90.0 degrees since a yaw of 0.0
+                    // results in a direction vector pointing to the right so we
+                    // initially rotate a bit to the left.
+float pitch = 0.0f;
+float lastX = 800.0f / 2.0;
+float lastY = 600.0 / 2.0;
+
 void onResize(int width, int height) {
   GL_CALL(glViewport(0, 0, width, height));
 }
 
-void onKeyBoard(int key, int action, int mods) {
-  std::cout << "onKey: " << key << " " << action << " " << mods << std::endl;
+void processInput(GLFWwindow *window) {
+  ImGuiIO &io = ImGui::GetIO();
+  // 添加这个检查，当ImGui需要键盘输入时不处理相机移动
+  if (io.WantCaptureKeyboard) {
+    return;
+  }
+
+  if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    glfwSetWindowShouldClose(window, true);
+
+  float cameraSpeed = static_cast<float>(2.5 * deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    cameraPos += cameraSpeed * cameraFront;
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    cameraPos -= cameraSpeed * cameraFront;
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    cameraPos -=
+        glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    cameraPos +=
+        glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+}
+
+void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) {
+  if (!mouseEnabled) // 先检查是否启用鼠标控制
+    return;
+
+  float xpos = static_cast<float>(xposIn);
+  float ypos = static_cast<float>(yposIn);
+
+  if (firstMouse) {
+    lastX = xpos;
+    lastY = ypos;
+    firstMouse = false;
+  }
+
+  float xoffset = xpos - lastX;
+  float yoffset =
+      lastY - ypos; // reversed since y-coordinates go from bottom to top
+  lastX = xpos;
+  lastY = ypos;
+
+  float sensitivity = 0.1f; // change this value to your liking
+  xoffset *= sensitivity;
+  yoffset *= sensitivity;
+
+  yaw += xoffset;
+  pitch += yoffset;
+
+  // make sure that when pitch is out of bounds, screen doesn't get flipped
+  if (pitch > 89.0f)
+    pitch = 89.0f;
+  if (pitch < -89.0f)
+    pitch = -89.0f;
+
+  glm::vec3 front;
+  front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+  front.y = sin(glm::radians(pitch));
+  front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+  cameraFront = glm::normalize(front);
+}
+
+void mouse_button_callback(GLFWwindow *window, int button, int action,
+                           int mods) {
+  ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+  ImGuiIO &io = ImGui::GetIO();
+  if (io.WantCaptureMouse)
+    return;
+
+  if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+    if (action == GLFW_PRESS) {
+      mouseEnabled = true;
+      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+      firstMouse = true;
+    } else if (action == GLFW_RELEASE) {
+      mouseEnabled = false;
+      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+  }
 }
 
 unsigned int VBO, VAO, texture1, texture2;
@@ -114,18 +225,18 @@ void loadTexture() {
   stbi_image_free(data);
 }
 
-float mixValue = 0.2f;
-float fov = 45.0f;
-float nearPlane = 0.1f;
-float farPlane = 100.0f;
-bool wireframeMode = false;
-glm::vec4 tintColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-glm::vec4 bgColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-glm::vec3 translateVec = glm::vec3(0.0f);
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
+  ImGuiIO &io = ImGui::GetIO();
+  if (io.WantCaptureMouse) {
+    return; // 如果ImGui需要鼠标，直接返回
+  }
 
-// settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+  fov -= (float)yoffset;
+  if (fov < 1.0f)
+    fov = 1.0f;
+  if (fov > 45.0f)
+    fov = 45.0f;
+}
 
 glm::vec3 cubePositions[] = {
     glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
@@ -136,15 +247,15 @@ glm::vec3 cubePositions[] = {
 
 int main() {
   Application &app = Application::getInstance();
-  if (!app.init(SCR_WIDTH, SCR_HEIGHT, "Chapter12坐标系统")) {
+  if (!app.init(SCR_WIDTH, SCR_HEIGHT, "Chapter14控制相机")) {
     std::cerr << "Failed to initialize application" << std::endl;
     return -1;
   }
   ImGuiLayer::init(app.getWindow());
+  ImGui::GetIO().ConfigFlags |=
+      ImGuiConfigFlags_NavEnableKeyboard; // 启用键盘导航
 
-  app.setKeyCallback(onKeyBoard);
-  app.setResizeCallback(onResize);
-  // 开启opengl深度测试 解决立方体重叠问题 z-fighting
+  // 开启opengl深度测试 解决立方体重的叠问题 z-fighting
   glEnable(GL_DEPTH_TEST);
   Shader ourShader("../../shaders/chapter12/vertex.glsl",
                    "../../shaders/chapter12/fragment.glsl");
@@ -152,7 +263,24 @@ int main() {
   prepare();
   loadTexture();
 
+  app.setResizeCallback(onResize);
+
+  glfwSetCursorPosCallback(app.getWindow(), mouse_callback);
+  glfwSetScrollCallback(app.getWindow(), scroll_callback);
+  glfwSetMouseButtonCallback(app.getWindow(), mouse_button_callback);
+
   while (app.update()) {
+
+    float currentFrame = static_cast<float>(glfwGetTime());
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+
+    ImGuiLayer::begin();
+
+    processInput(app.getWindow());
+
+    GL_CALL(glClearColor(bgColor.r, bgColor.g, bgColor.b, bgColor.a));
+    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
     // 设置线框模式
     if (wireframeMode) {
@@ -160,12 +288,9 @@ int main() {
     } else {
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
-
-    GL_CALL(glClearColor(bgColor.r, bgColor.g, bgColor.b, bgColor.a));
-    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
     // 1. 先激活着色器
     ourShader.use();
-
+    ourShader.setVec4("tintColor", tintColor);
     // 2. 设置纹理
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture1);
@@ -177,28 +302,22 @@ int main() {
     ourShader.setFloat("mixValue", mixValue);
 
     // 4. 设置变换矩阵
-    glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 view = glm::mat4(1.0f);
-    glm::mat4 projection = glm::mat4(1.0f);
 
-    projection = glm::perspective(glm::radians(fov),
-                                  (float)SCR_WIDTH / (float)SCR_HEIGHT,
-                                  nearPlane, farPlane);
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
     // 5. 使用Shader类的方法设置矩阵
+    // camera/view transformation
+    glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+    glm::mat4 projection = glm::perspective(
+        glm::radians(fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, nearPlane,
+        farPlane);
     ourShader.setMat4("view", view);
     ourShader.setMat4("projection", projection);
-
     // 6. 绘制
     glBindVertexArray(VAO);
-
     for (unsigned int i = 0; i < 10; i++) {
-      glm::mat4 model;
+      glm::mat4 model = glm::mat4(
+          1.0f); // make sure to initialize matrix to identity matrix first
       model = glm::translate(model, cubePositions[i] + translateVec);
       float angle = 20.0f * i;
-      if (i % 3 == 0) // every 3rd iteration (including the first) we set the
-                      // angle using GLFW's time function.
-        angle = glfwGetTime() * 25.0f;
       model =
           glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 
@@ -207,7 +326,6 @@ int main() {
       glDrawArrays(GL_TRIANGLES, 0, 36);
     }
 
-    ImGuiLayer::begin();
     // 左上角窗口
     ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Once);
     ImGui::SetNextWindowSize(ImVec2(200, 150), ImGuiCond_Once);

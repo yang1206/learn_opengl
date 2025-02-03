@@ -18,7 +18,7 @@ void ImGuiLayer::init(GLFWwindow *window) {
   glfwGetWindowContentScale(window, &xscale, &yscale);
 
   // 设置基础字体大小和窗口最小尺寸
-  float baseFontSize = 16.0f; // 基础字体大小
+  float baseFontSize = 12.0f; // 基础字体大小
   style.WindowMinSize = ImVec2(100.0f, 100.0f);
 
   // 加载字体
