@@ -64,7 +64,7 @@ void prepareObjects() {
 void prepareShader() {
 
     const char *vertexShaderSource = R"(
-#version 420 core
+#version 410 core
 layout (location = 0) in vec3 aPos;
 void main()
 {
@@ -73,7 +73,7 @@ void main()
 )";
 
     const char *fragmentShaderSource = R"(
-#version 420 core
+#version 410 core
 out vec4 FragColor;
 void main()
 {

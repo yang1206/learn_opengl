@@ -5,14 +5,12 @@
 #include <glad/glad.h>
 
 #include "Application.h"
+#include "Camera.h"
 #include "ImGuiLayer.h"
 #include "Shader.h"
 #include "checkError.h"
 #include "imgui.h"
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
 float mixValue = 0.2f;
@@ -28,28 +26,17 @@ glm::vec3 translateVec = glm::vec3(0.0f);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-// camera
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
 // timing
 float deltaTime = 0.0f; // time between current frame and last frame
 float lastFrame = 0.0f;
 
-bool firstMouse = true;
-bool mouseEnabled = false;
 bool imguiWantCaptureMouse = false;
 
-float yaw = -90.0f; // yaw is initialized to -90.0 degrees since a yaw of 0.0
-                    // results in a direction vector pointing to the right so we
-                    // initially rotate a bit to the left.
-float pitch = 0.0f;
-float lastX = 800.0f / 2.0;
-float lastY = 600.0 / 2.0;
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 void onResize(int width, int height) {
   GL_CALL(glViewport(0, 0, width, height));
+  camera.SetAspectRatio(static_cast<float>(width) / static_cast<float>(height));
 }
 
 void processInput(GLFWwindow *window) {
@@ -62,56 +49,21 @@ void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, true);
 
-  float cameraSpeed = static_cast<float>(2.5 * deltaTime);
+  // 使用相机类处理键盘输入
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    cameraPos += cameraSpeed * cameraFront;
+    camera.ProcessKeyboard(FORWARD, deltaTime);
   if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    cameraPos -= cameraSpeed * cameraFront;
+    camera.ProcessKeyboard(BACKWARD, deltaTime);
   if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    cameraPos -=
-        glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    camera.ProcessKeyboard(LEFT, deltaTime);
   if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-    cameraPos +=
-        glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+    camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
 void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) {
-  if (!mouseEnabled) // 先检查是否启用鼠标控制
-    return;
-
   float xpos = static_cast<float>(xposIn);
   float ypos = static_cast<float>(yposIn);
-
-  if (firstMouse) {
-    lastX = xpos;
-    lastY = ypos;
-    firstMouse = false;
-  }
-
-  float xoffset = xpos - lastX;
-  float yoffset =
-      lastY - ypos; // reversed since y-coordinates go from bottom to top
-  lastX = xpos;
-  lastY = ypos;
-
-  float sensitivity = 0.1f; // change this value to your liking
-  xoffset *= sensitivity;
-  yoffset *= sensitivity;
-
-  yaw += xoffset;
-  pitch += yoffset;
-
-  // make sure that when pitch is out of bounds, screen doesn't get flipped
-  if (pitch > 89.0f)
-    pitch = 89.0f;
-  if (pitch < -89.0f)
-    pitch = -89.0f;
-
-  glm::vec3 front;
-  front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-  front.y = sin(glm::radians(pitch));
-  front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-  cameraFront = glm::normalize(front);
+  camera.ProcessMouseMovement(xpos, ypos);
 }
 
 void mouse_button_callback(GLFWwindow *window, int button, int action,
@@ -123,14 +75,27 @@ void mouse_button_callback(GLFWwindow *window, int button, int action,
 
   if (button == GLFW_MOUSE_BUTTON_RIGHT) {
     if (action == GLFW_PRESS) {
-      mouseEnabled = true;
+      camera.SetMouseControl(true);
       glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-      firstMouse = true;
+      double xpos, ypos;
+      glfwGetCursorPos(window, &xpos, &ypos);
+      camera.ResetMouseState(static_cast<float>(xpos),
+                             static_cast<float>(ypos));
     } else if (action == GLFW_RELEASE) {
-      mouseEnabled = false;
+      camera.SetMouseControl(false);
       glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     }
   }
+}
+
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
+  ImGuiIO &io = ImGui::GetIO();
+  if (io.WantCaptureMouse) {
+    return; // 如果ImGui需要鼠标，直接返回
+  }
+
+  camera.ProcessMouseScroll(static_cast<float>(yoffset));
+  fov = camera.GetFov();
 }
 
 unsigned int VBO, VAO, texture1, texture2;
@@ -225,19 +190,6 @@ void loadTexture() {
   stbi_image_free(data);
 }
 
-void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-  ImGuiIO &io = ImGui::GetIO();
-  if (io.WantCaptureMouse) {
-    return; // 如果ImGui需要鼠标，直接返回
-  }
-
-  fov -= (float)yoffset;
-  if (fov < 1.0f)
-    fov = 1.0f;
-  if (fov > 45.0f)
-    fov = 45.0f;
-}
-
 glm::vec3 cubePositions[] = {
     glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
     glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
@@ -269,8 +221,13 @@ int main() {
   glfwSetScrollCallback(app.getWindow(), scroll_callback);
   glfwSetMouseButtonCallback(app.getWindow(), mouse_button_callback);
 
-  while (app.update()) {
+  camera.SetAspectRatio(static_cast<float>(SCR_WIDTH) /
+                        static_cast<float>(SCR_HEIGHT));
+  camera.SetNearPlane(nearPlane);
+  camera.SetFarPlane(farPlane);
+  camera.SetFov(fov);
 
+  while (app.update()) {
     float currentFrame = static_cast<float>(glfwGetTime());
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
@@ -305,10 +262,8 @@ int main() {
 
     // 5. 使用Shader类的方法设置矩阵
     // camera/view transformation
-    glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-    glm::mat4 projection = glm::perspective(
-        glm::radians(fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, nearPlane,
-        farPlane);
+    glm::mat4 view = camera.GetViewMatrix();
+    glm::mat4 projection = camera.GetProjectionMatrix();
     ourShader.setMat4("view", view);
     ourShader.setMat4("projection", projection);
     // 6. 绘制
@@ -334,13 +289,30 @@ int main() {
     ImGui::ColorEdit4("Tint", &tintColor.x);
     ImGui::ColorEdit4("Background", &bgColor.x);
     ImGui::End();
-    // ImGui控制面板
 
+    ImGui::Begin("Camera Settings");
+    static float moveSpeed = SPEED;
+    static float sensitivity = SENSITIVITY;
+    if (ImGui::SliderFloat("Move Speed", &moveSpeed, 0.1f, 10.0f)) {
+      camera.SetMovementSpeed(moveSpeed);
+    }
+    if (ImGui::SliderFloat("Mouse Sensitivity", &sensitivity, 0.01f, 1.0f)) {
+      camera.SetMouseSensitivity(sensitivity);
+    }
+
+    // 显示相机位置信息
+    glm::vec3 pos = camera.GetPosition();
+    ImGui::Text("Position: (%.2f, %.2f, %.2f)", pos.x, pos.y, pos.z);
+    ImGui::End();
+
+    // ImGui控制面板
     ImGui::SetNextWindowPos(ImVec2(10, SCR_HEIGHT - 160), ImGuiCond_Once);
     ImGui::SetNextWindowSize(ImVec2(200, 150), ImGuiCond_Once);
     ImGui::Begin("Transform");
     ImGui::SliderFloat3("Translate", &translateVec.x, -3.0f, 3.0f);
-    ImGui::SliderFloat("FOV", &fov, 1.0f, 90.0f);
+    if (ImGui::SliderFloat("FOV", &fov, 1.0f, 90.0f)) {
+      camera.SetFov(fov); // 当 FOV 改变时更新相机
+    }
     ImGui::SliderFloat("纹理可见度", &mixValue, 0.0f, 1.0f);
     ImGui::End();
     // 渲染ImGui
